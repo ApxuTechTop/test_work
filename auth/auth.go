@@ -20,13 +20,13 @@ type Auth struct {
 }
 
 type IdErrorHandler interface {
-	OnId(expected string, received string) (isOk bool)
+	OnWrongId(expected string, received string) (isOk bool)
 }
 type ExpErrorHandler interface {
-	OnExp(expected int64, received int64) (isOk bool)
+	OnWrongExp(expected int64, received int64) (isOk bool)
 }
 type IpErrorHandler interface {
-	OnIp(expected string, received string) (isOk bool)
+	OnWrongIp(expected string, received string) (isOk bool)
 }
 type WrongSignatureHandler interface {
 	OnWrongSignature(expected []byte, received []byte) (isOk bool)
@@ -54,17 +54,17 @@ func (a Auth) ValidateTokens(user_id string, accessToken string, refreshToken st
 		isOk = false
 	}
 	id := claims["id"].(string)
-	if id != user_id && !handlers.OnId(id, user_id) {
+	if id != user_id && !handlers.OnWrongId(id, user_id) {
 		isOk = false
 	}
 	expirationTime := int64(claims["exp"].(float64))
 	currentTime := time.Now().Unix()
-	if expirationTime <= currentTime && !handlers.OnExp(currentTime, expirationTime) {
+	if expirationTime <= currentTime && !handlers.OnWrongExp(currentTime, expirationTime) {
 		isOk = false
 	}
 
 	ip := claims["ip"].(string)
-	if ip != requestIp && !handlers.OnIp(ip, requestIp) {
+	if ip != requestIp && !handlers.OnWrongIp(ip, requestIp) {
 		isOk = false
 	}
 
@@ -103,6 +103,9 @@ func generateRefreshToken(signature string) (refresh_token string, hash_token st
 func generateAccessToken(user_id string, ip string, duration time.Duration) (string, string, error) {
 	salt := make([]byte, 16) // 16 байт соли
 	_, err := rand.Read(salt)
+	if err != nil {
+		return "", "", err
+	}
 	payload := jwt.MapClaims{
 		"id":   user_id,
 		"ip":   ip,

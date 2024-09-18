@@ -45,14 +45,20 @@ func getTokensHandler(w http.ResponseWriter, r *http.Request) {
 
 type errorHandlers struct{}
 
-func (e errorHandlers) OnIp(expected string, received string) bool {
+func (e errorHandlers) OnWrongIp(expected string, received string) bool {
 	sendMailWarn()
 	return true
 }
-func (e errorHandlers) OnExp(expected int64, received int64) bool {
+func (e errorHandlers) OnWrongExp(expected int64, received int64) bool {
 	return false
 }
-func (e errorHandlers) OnId(expected string, received string) bool {
+func (e errorHandlers) OnWrongId(expected string, received string) bool {
+	return false
+}
+func (e errorHandlers) OnWrongSignature(expected []byte, received []byte) bool {
+	return false
+}
+func (e errorHandlers) OnMissingRefreshToken(received string) bool {
 	return false
 }
 

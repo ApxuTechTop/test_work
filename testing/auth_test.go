@@ -33,16 +33,16 @@ type errorHandlers struct {
 	IpHandler func()
 }
 
-func (e errorHandlers) OnIp(expected string, received string) bool {
+func (e errorHandlers) OnWrongIp(expected string, received string) bool {
 	e.IpHandler()
 	fmt.Printf("ip %s %s\n", expected, received)
 	return true
 }
-func (e errorHandlers) OnExp(expected int64, received int64) bool {
+func (e errorHandlers) OnWrongExp(expected int64, received int64) bool {
 	fmt.Printf("exp %d %d\n", expected, received)
 	return false
 }
-func (e errorHandlers) OnId(expected string, received string) bool {
+func (e errorHandlers) OnWrongId(expected string, received string) bool {
 	fmt.Printf("id %s %s\n", expected, received)
 	return false
 }

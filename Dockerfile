@@ -1,7 +1,7 @@
 FROM golang AS builder
 WORKDIR /code
 COPY . /code
-ENV GOPROXY=direct
+#ENV GOPROXY=direct
 RUN go mod tidy
 RUN go build -o main main.go
 FROM dokken/ubuntu-22.04

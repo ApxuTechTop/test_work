@@ -1,4 +1,8 @@
+.PHONY: build run test
+
 build:
-	docker build -t test_auth .
+	docker compose build
 run:
-	docker run -p3678:80 -d test_auth
+	docker compose up
+test:
+	go test -run ^TestAll$ test_auth/testing

@@ -14,10 +14,7 @@ func sendMailWarn() {
 
 }
 
-var a auth.Auth = auth.Auth{
-	DB:                  db.Database{},
-	AccessTokenDuration: time.Minute * 1,
-}
+var a auth.Auth
 
 func getTokensHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -88,6 +85,11 @@ func refreshTokensHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, err)
 		return
 	}
+	err = a.DB.Delete(user_id, refreshToken)
+	if err != nil {
+		fmt.Fprint(w, err)
+		return
+	}
 	newTokens := map[string]string{
 		"access_token":  newAccessToken,
 		"refresh_token": newRefreshToken,
@@ -100,10 +102,20 @@ func refreshTokensHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	storage, err := db.GetDatabase()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer storage.Connection.Close()
+	a = auth.Auth{
+		DB:                  storage,
+		AccessTokenDuration: time.Minute * 1,
+	}
 	fmt.Println("hello world")
 	http.HandleFunc("/get-tokens", getTokensHandler)
 	http.HandleFunc("/refresh-token", refreshTokensHandler)
-	err := http.ListenAndServe("0.0.0.0:80", nil)
+	err = http.ListenAndServe("0.0.0.0:80", nil)
 	if err != nil {
 		fmt.Println(err)
 	}

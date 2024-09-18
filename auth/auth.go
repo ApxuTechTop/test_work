@@ -44,6 +44,19 @@ type ErrorHandlers interface {
 	MissingRefreshTokenErrorHandler
 }
 
+func check(tokens []string, refreshToken string) bool {
+	decoded, err := base64.StdEncoding.DecodeString(refreshToken)
+	if err != nil {
+		return false
+	}
+	for _, token := range tokens {
+		if bcrypt.CompareHashAndPassword([]byte(token), decoded) == nil {
+			return true
+		}
+	}
+	return false
+}
+
 func (a Auth) ValidateTokens(user_id string, accessToken string, refreshToken string, requestIp string, handlers ErrorHandlers) bool {
 	claims := jwt.MapClaims{}
 	token, err := jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
@@ -51,7 +64,7 @@ func (a Auth) ValidateTokens(user_id string, accessToken string, refreshToken st
 	})
 	isOk := true
 	if err != nil {
-		isOk = false
+		return false
 	}
 	id := claims["id"].(string)
 	if id != user_id && !handlers.OnWrongId(id, user_id) {
@@ -75,7 +88,12 @@ func (a Auth) ValidateTokens(user_id string, accessToken string, refreshToken st
 	if !bytes.HasPrefix(data, sigBytes) && !handlers.OnWrongSignature(data[:32], sigBytes) {
 		isOk = false
 	}
-	if !a.DB.Check(user_id, refreshToken) && !handlers.OnMissingRefreshToken(refreshToken) {
+	//a.DB.Check(user_id, refreshToken)
+	tokens, err := a.DB.Load(user_id)
+	if err != nil {
+		return false
+	}
+	if !check(tokens, refreshToken) && !handlers.OnMissingRefreshToken(refreshToken) {
 		isOk = false
 	}
 

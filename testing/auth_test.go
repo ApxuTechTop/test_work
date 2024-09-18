@@ -14,19 +14,40 @@ type DbMock struct {
 	storage map[string][]string
 }
 
-func (d *DbMock) Save(user_id string, hashToken string) {
+func (d *DbMock) Save(user_id string, hashToken string) error {
 	d.storage[user_id] = append(d.storage[user_id], hashToken)
+	return nil
 }
-func (d *DbMock) Check(user_id string, refreshToken string) bool {
-	decodedToken, _ := base64.StdEncoding.DecodeString(refreshToken)
-	for _, hashToken := range d.storage[user_id] {
+
+// func (d *DbMock) Check(user_id string, refreshToken string) bool {
+// 	decodedToken, _ := base64.StdEncoding.DecodeString(refreshToken)
+// 	for _, hashToken := range d.storage[user_id] {
+// 		err := bcrypt.CompareHashAndPassword([]byte(hashToken), decodedToken)
+// 		if err == nil {
+// 			return true
+// 		}
+// 	}
+
+// 	return false
+// }
+
+func (d *DbMock) Load(user_id string) ([]string, error) {
+	return d.storage[user_id], nil
+}
+
+func (d *DbMock) Delete(user_id string, refreshToken string) error {
+	decodedToken, err := base64.StdEncoding.DecodeString(refreshToken)
+	if err != nil {
+		return err
+	}
+	for i, hashToken := range d.storage[user_id] {
 		err := bcrypt.CompareHashAndPassword([]byte(hashToken), decodedToken)
 		if err == nil {
-			return true
+			d.storage[user_id] = append(d.storage[user_id][:i], d.storage[user_id][i+1:]...)
+			return nil
 		}
 	}
-
-	return false
+	return nil
 }
 
 type errorHandlers struct {
